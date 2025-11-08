@@ -1,2 +1,2 @@
 streamlit==1.30.0
-pillow==9.5.0
+img2pdf==0.4.6
