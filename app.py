@@ -6,7 +6,7 @@ import tempfile
 import os
 import math
 
-st.set_page_config(page_title="디지털 교과서 PDF 변환기 (안전 버전)", layout="wide")
+st.set_page_config(page_title="디지털 교과서 PDF 변환기 (안전 + 다운로드 불필요)", layout="wide")
 st.title("📚 자동 페이지 맞춤 + PDF 변환기 (책 페이지 기준, 안정화)")
 
 page_width = st.number_input("책 페이지 가로 픽셀 수", min_value=100, value=1200)
@@ -50,4 +50,25 @@ if uploaded_zip:
             horizontal_pages = math.ceil(img_width / page_width)
             vertical_pages = math.ceil(img_height / page_height)
 
-            for
+            for v in range(vertical_pages):
+                for h in range(horizontal_pages):
+                    left = h * page_width
+                    upper = v * page_height
+                    right = min((h+1) * page_width, img_width)
+                    lower = min((v+1) * page_height, img_height)
+                    cropped = img.crop((left, upper, right, lower))
+
+                    # 페이지 크기보다 작으면 흰색 배경에 붙이기
+                    if cropped.size != (page_width, page_height):
+                        page_img = Image.new("RGB", (page_width, page_height), (255,255,255))
+                        page_img.paste(cropped, (0,0))
+                        pdf_pages.append(page_img)
+                    else:
+                        pdf_pages.append(cropped)
+
+        if pdf_pages:
+            pdf_bytes = io.BytesIO()
+            pdf_pages[0].save(pdf_bytes, format="PDF", save_all=True, append_images=pdf_pages[1:], quality=100)
+            pdf_bytes.seek(0)
+            st.success(f"✅ PDF 생성 완료! 총 {len(pdf_pages)}페이지")
+            st.download_button("📄 PDF 다운로드", pdf_bytes, file_name="Digital_Textbook.pdf", mime="application/pdf")
